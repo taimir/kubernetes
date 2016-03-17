@@ -58,8 +58,8 @@ MASTER_PASSWD=vagrant
 ADMISSION_CONTROL=NamespaceLifecycle,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
 
 # Optional: Enable node logging.
-ENABLE_NODE_LOGGING=false
-LOGGING_DESTINATION=elasticsearch
+ENABLE_NODE_LOGGING=true
+LOGGING_DESTINATION=monasca
 
 # Optional: When set to true, Elasticsearch and Kibana will be setup as part of the cluster bring up.
 ENABLE_CLUSTER_LOGGING=false
@@ -69,7 +69,7 @@ ELASTICSEARCH_LOGGING_REPLICAS=1
 #   none     - No cluster monitoring setup
 #   influxdb - Heapster, InfluxDB, and Grafana
 #   google   - Heapster, Google Cloud Monitoring, and Google Cloud Logging
-ENABLE_CLUSTER_MONITORING="${KUBE_ENABLE_CLUSTER_MONITORING:-influxdb}"
+ENABLE_CLUSTER_MONITORING="${KUBE_ENABLE_CLUSTER_MONITORING:-monasca}"
 
 # Extra options to set on the Docker command line.  This is useful for setting
 # --insecure-registry for local registries, or globally configuring selinux options

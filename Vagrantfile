@@ -2,12 +2,12 @@
 # vi: set ft=ruby :
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
-VAGRANTFILE_API_VERSION = "2"
+VAGRANTFILE_API_VERSION = '2'.freeze
 
 # Require a recent version of vagrant otherwise some have reported errors setting host names on boxes
-Vagrant.require_version ">= 1.7.4"
+Vagrant.require_version '>= 1.7.4'
 
-if ARGV.first == "up" && ENV['USING_KUBE_SCRIPTS'] != 'true'
+if ARGV.first == 'up' && ENV['USING_KUBE_SCRIPTS'] != 'true'
   raise Vagrant::Errors::VagrantError.new, <<END
 Calling 'vagrant up' directly is not supported.  Instead, please run the following:
 
@@ -22,11 +22,11 @@ $num_node = (ENV['NUM_NODES'] || 1).to_i
 
 # ip configuration
 $master_ip = ENV['MASTER_IP']
-$node_ip_base = ENV['NODE_IP_BASE'] || ""
-$node_ips = $num_node.times.collect { |n| $node_ip_base + "#{n+3}" }
+$node_ip_base = ENV['NODE_IP_BASE'] || ''
+$node_ips = $num_node.times.collect { |n| $node_ip_base + (n + 3).to_s }
 
 # Determine the OS platform to use
-$kube_os = ENV['KUBERNETES_OS'] || "fedora"
+$kube_os = ENV['KUBERNETES_OS'] || 'fedora'
 
 # Determine whether vagrant should use nfs to sync folders
 $use_nfs = ENV['KUBERNETES_VAGRANT_USE_NFS'] == 'true'
@@ -44,7 +44,7 @@ $use_nfs = ENV['KUBERNETES_VAGRANT_USE_NFS'] == 'true'
 
 # Default OS platform to provider/box information
 $kube_provider_boxes = {
-  :parallels => {
+  parallels: {
     'fedora' => {
       # :box_url and :box_version are optional (and mutually exclusive);
       # if :box_url is omitted the box will be retrieved by :box_name (and
@@ -56,26 +56,26 @@ $kube_provider_boxes = {
       # opscode_fedora-20", but by providing the URL and our own name, we
       # make it appear as yet another provider under the "kube-fedora22"
       # box
-      :box_name => 'kube-fedora23',
-      :box_url => 'https://opscode-vm-bento.s3.amazonaws.com/vagrant/parallels/opscode_fedora-23_chef-provisionerless.box'
+      box_name: 'kube-fedora23',
+      box_url: 'https://opscode-vm-bento.s3.amazonaws.com/vagrant/parallels/opscode_fedora-23_chef-provisionerless.box'
     }
   },
-  :virtualbox => {
+  virtualbox: {
     'fedora' => {
-      :box_name => 'kube-fedora23',
-      :box_url => 'https://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_fedora-23_chef-provisionerless.box'
+      box_name: 'kube-fedora23',
+      box_url: 'https://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_fedora-23_chef-provisionerless.box'
     }
   },
-  :libvirt => {
+  libvirt: {
     'fedora' => {
-      :box_name => 'kube-fedora23',
-      :box_url => 'https://dl.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box'
+      box_name: 'kube-fedora23',
+      box_url: 'https://dl.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box'
     }
   },
-  :vmware_desktop => {
+  vmware_desktop: {
     'fedora' => {
-      :box_name => 'kube-fedora23',
-      :box_url => 'https://opscode-vm-bento.s3.amazonaws.com/vagrant/vmware/opscode_fedora-23_chef-provisionerless.box'
+      box_name: 'kube-fedora23',
+      box_url: 'https://opscode-vm-bento.s3.amazonaws.com/vagrant/vmware/opscode_fedora-23_chef-provisionerless.box'
     }
   }
 }
@@ -89,13 +89,11 @@ host = RbConfig::CONFIG['host_os']
 if host =~ /darwin/
   $vm_cpus = `sysctl -n hw.physicalcpu`.to_i
 elsif host =~ /linux/
-  #This should work on most processors, however it will fail on ones without the core id field.
-  #So far i have only seen this on a raspberry pi. which you probably don't want to run vagrant on anyhow...
-  #But just in case we'll default to the result of nproc if we get 0 just to be safe.
+  # This should work on most processors, however it will fail on ones without the core id field.
+  # So far i have only seen this on a raspberry pi. which you probably don't want to run vagrant on anyhow...
+  # But just in case we'll default to the result of nproc if we get 0 just to be safe.
   $vm_cpus = `cat /proc/cpuinfo | grep 'core id' | sort -u | wc -l`.to_i
-  if $vm_cpus < 1
-      $vm_cpus = `nproc`.to_i
-  end
+  $vm_cpus = `nproc`.to_i if $vm_cpus < 1
 else # sorry Windows folks, I can't help you
   $vm_cpus = 2
 end
@@ -104,47 +102,42 @@ end
 # In Fedora VM, tmpfs device is mapped to /tmp.  tmpfs is given 50% of RAM allocation.
 # When doing Salt provisioning, we copy approximately 200MB of content in /tmp before anything else happens.
 # This causes problems if anything else was in /tmp or the other directories that are bound to tmpfs device (i.e /run, etc.)
-$vm_master_mem = (ENV['KUBERNETES_MASTER_MEMORY'] || ENV['KUBERNETES_MEMORY'] || 1280).to_i
-$vm_node_mem = (ENV['KUBERNETES_NODE_MEMORY'] || ENV['KUBERNETES_MEMORY'] || 1024).to_i
+$vm_master_mem = (ENV['KUBERNETES_MASTER_MEMORY'] || ENV['KUBERNETES_MEMORY'] || 2560).to_i
+$vm_node_mem = (ENV['KUBERNETES_NODE_MEMORY'] || ENV['KUBERNETES_MEMORY'] || 2560).to_i
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  if Vagrant.has_plugin?("vagrant-proxyconf")
-    $http_proxy = ENV['KUBERNETES_HTTP_PROXY'] || ""
-    $https_proxy = ENV['KUBERNETES_HTTPS_PROXY'] || ""
-    $no_proxy = ENV['KUBERNETES_NO_PROXY'] || "127.0.0.1"
+  if Vagrant.has_plugin?('vagrant-proxyconf')
+    $http_proxy = ENV['KUBERNETES_HTTP_PROXY'] || ''
+    $https_proxy = ENV['KUBERNETES_HTTPS_PROXY'] || ''
+    $no_proxy = ENV['KUBERNETES_NO_PROXY'] || '127.0.0.1'
     config.proxy.http     = $http_proxy
     config.proxy.https    = $https_proxy
     config.proxy.no_proxy = $no_proxy
   end
   def setvmboxandurl(config, provider)
-    if ENV['KUBERNETES_BOX_NAME'] then
+    if ENV['KUBERNETES_BOX_NAME']
       config.vm.box = ENV['KUBERNETES_BOX_NAME']
 
-      if ENV['KUBERNETES_BOX_URL'] then
-        config.vm.box_url = ENV['KUBERNETES_BOX_URL']
-      end
+      config.vm.box_url = ENV['KUBERNETES_BOX_URL'] if ENV['KUBERNETES_BOX_URL']
 
-      if ENV['KUBERNETES_BOX_VERSION'] then
+      if ENV['KUBERNETES_BOX_VERSION']
         config.vm.box_version = ENV['KUBERNETES_BOX_VERSION']
       end
     else
       config.vm.box = $kube_provider_boxes[provider][$kube_os][:box_name]
 
-      if $kube_provider_boxes[provider][$kube_os][:box_url] then
+      if $kube_provider_boxes[provider][$kube_os][:box_url]
         config.vm.box_url = $kube_provider_boxes[provider][$kube_os][:box_url]
       end
 
-      if $kube_provider_boxes[provider][$kube_os][:box_version] then
+      if $kube_provider_boxes[provider][$kube_os][:box_version]
         config.vm.box_version = $kube_provider_boxes[provider][$kube_os][:box_version]
       end
     end
   end
 
   def customize_vm(config, vm_mem)
-
-    if $use_nfs then
-      config.vm.synced_folder ".", "/vagrant", nfs: true
-    end
+    config.vm.synced_folder '.', '/vagrant', nfs: true if $use_nfs
 
     # Try VMWare Fusion first (see
     # https://docs.vagrantup.com/v2/providers/basic_usage.html)
@@ -188,7 +181,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       # Remove all auto-mounted "shared folders"; the result seems to
       # persist between runs (i.e., vagrant halt && vagrant up)
-      override.vm.provision :shell, :inline => (%q{
+      override.vm.provision :shell, inline: '
         set -ex
         if [ -d /media/psf ]; then
           for i in /media/psf/*; do
@@ -200,13 +193,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           rmdir -v /media/psf
         fi
         exit
-      }).strip
+      '.strip
     end
 
     # Don't attempt to update Virtualbox Guest Additions (requires gcc)
-    if Vagrant.has_plugin?("vagrant-vbguest") then
-      config.vbguest.auto_update = false
-    end
+    config.vbguest.auto_update = false if Vagrant.has_plugin?('vagrant-vbguest')
     # Finally, fall back to VirtualBox
     config.vm.provider :virtualbox do |v, override|
       setvmboxandurl(override, :virtualbox)
@@ -214,24 +205,24 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       v.cpus = $vm_cpus # v.customize ["modifyvm", :id, "--cpus", $vm_cpus]
 
       # Use faster paravirtualized networking
-      v.customize ["modifyvm", :id, "--nictype1", "virtio"]
-      v.customize ["modifyvm", :id, "--nictype2", "virtio"]
+      v.customize ['modifyvm', :id, '--nictype1', 'virtio']
+      v.customize ['modifyvm', :id, '--nictype2', 'virtio']
     end
   end
 
   # Kubernetes master
-  config.vm.define "master" do |c|
+  config.vm.define 'master' do |c|
     customize_vm c, $vm_master_mem
-    if ENV['KUBE_TEMP'] then
+    if ENV['KUBE_TEMP']
       script = "#{ENV['KUBE_TEMP']}/master-start.sh"
-      c.vm.provision "shell", run: "always", path: script
+      c.vm.provision 'shell', run: 'always', path: script
     end
-    c.vm.network "private_network", ip: "#{$master_ip}"
+    c.vm.network 'private_network', ip: $master_ip.to_s
   end
 
   # Kubernetes node
   $num_node.times do |n|
-    node_vm_name = "node-#{n+1}"
+    node_vm_name = "node-#{n + 1}"
     node_prefix = ENV['INSTANCE_PREFIX'] || 'kubernetes' # must mirror default in cluster/vagrant/config-default.sh
     node_hostname = "#{node_prefix}-#{node_vm_name}"
 
@@ -239,11 +230,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       customize_vm node, $vm_node_mem
 
       node_ip = $node_ips[n]
-      if ENV['KUBE_TEMP'] then
+      if ENV['KUBE_TEMP']
         script = "#{ENV['KUBE_TEMP']}/node-start-#{n}.sh"
-        node.vm.provision "shell", run: "always", path: script
+        node.vm.provision 'shell', run: 'always', path: script
       end
-      node.vm.network "private_network", ip: "#{node_ip}"
+      node.vm.network 'private_network', ip: node_ip.to_s
     end
   end
 end

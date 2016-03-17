@@ -33,6 +33,8 @@ base:
     - fluentd-es
   {% elif pillar['logging_destination'] == 'gcp' %}
     - fluentd-gcp
+  {% elif pillar['logging_destination'] == 'monasca' %}
+    - logstash-monasca
   {% endif %}
 {% endif %}
 {% if pillar.get('enable_cluster_registry', '').lower() == 'true' %}
@@ -67,6 +69,8 @@ base:
     - fluentd-es
   {% elif pillar['logging_destination'] == 'gcp' %}
     - fluentd-gcp
+  {% elif pillar['logging_destination'] == 'monasca' %}
+    - logstash-monasca
   {% endif %}
 {% endif %}
 {% if grains['cloud'] is defined and grains['cloud'] != 'vagrant' %}

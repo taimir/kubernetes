@@ -78,6 +78,18 @@ addon-dir-create:
     - file_mode: 644
 {% endif %}
 
+{% if pillar.get('enable_cluster_monitoring', '').lower() == 'monasca' %}
+/etc/kubernetes/addons/cluster-monitoring/monasca:
+  file.recurse:
+    - source: salt://kube-addons/cluster-monitoring/monasca
+    - include_pat: E@(^.+\.yaml$|^.+\.json$)
+    - template: jinja
+    - user: root
+    - group: root
+    - dir_mode: 755
+    - file_mode: 644
+{% endif %}
+
 {% if pillar.get('enable_cluster_dns', '').lower() == 'true' %}
 /etc/kubernetes/addons/dns/skydns-svc.yaml:
   file.managed:

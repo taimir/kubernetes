@@ -93,7 +93,7 @@ readonly GCS_STAGE="${LOCAL_OUTPUT_ROOT}/gcs-stage"
 # Get the set of master binaries that run in Docker (on Linux)
 # Entry format is "<name-of-binary>,<base-image>".
 # Binaries are placed in /usr/local/bin inside the image.
-# 
+#
 # $1 - server architecture
 kube::build::get_docker_wrapped_binaries() {
   case $1 in
@@ -933,6 +933,7 @@ function kube::release::package_kube_manifests_tarball() {
 
   local salt_dir="${KUBE_ROOT}/cluster/saltbase/salt"
   cp "${salt_dir}/fluentd-es/fluentd-es.yaml" "${release_stage}/"
+  cp "${salt_dir}/logstash-monasca/logstash-monasca.yaml" "${release_stage}/"
   cp "${salt_dir}/fluentd-gcp/fluentd-gcp.yaml" "${release_stage}/"
   cp "${salt_dir}/kube-registry-proxy/kube-registry-proxy.yaml" "${release_stage}/"
   cp "${salt_dir}/kube-proxy/kube-proxy.manifest" "${release_stage}/"
