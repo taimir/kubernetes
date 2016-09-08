@@ -16,8 +16,8 @@
 #
 # Usage:
 #   [ARCH=amd64] [REGISTRY="gcr.io/google_containers"] make (build|push) VERSION={some_released_version_of_kubernetes}
-
-REGISTRY?=gcr.io/google_containers
+VERSION=v1.4.0
+REGISTRY?=taimir93
 ARCH?=amd64
 TEMP_DIR:=$(shell mktemp -d)
 CNI_RELEASE=9d5e6e60e79491207834ae8439e80c943db65a69
@@ -66,6 +66,8 @@ endif
 	# Multinode addons; all singlenode addons plus kube-proxy (and soon flannel)
 	cp ${TEMP_DIR}/addons/singlenode/*.yaml ${TEMP_DIR}/addons/multinode/
 	cp kube-proxy-ds.yaml ${TEMP_DIR}/addons/multinode/kube-proxy.yaml
+	cp kube-flannel-cfg.yaml ${TEMP_DIR}/addons/multinode/kube-flannel-cfg.yaml
+	cp kube-flannel.yaml ${TEMP_DIR}/addons/multinode/kube-flannel.yaml
 
 	cp ../../../_output/dockerized/bin/linux/${ARCH}/hyperkube ${TEMP_DIR}
 

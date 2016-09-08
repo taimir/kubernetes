@@ -37,8 +37,7 @@ spec:
         - /hyperkube
         - proxy
         - --kubeconfig=/var/lib/kubelet/kubeconfig/kubeconfig.yaml
-        - --v=2
-        - --resource-container=""
+        - --v=4
         securityContext:
           privileged: true
         volumeMounts:

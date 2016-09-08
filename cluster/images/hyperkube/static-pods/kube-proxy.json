@@ -10,12 +10,12 @@
     "containers": [
       {
         "name": "kube-proxy",
-        "image": "REGISTRY/hyperkube-ARCH:VERSION",
+        "image": "taimir93/hyperkube-amd64:v1.3.0",
         "command": [
           "/hyperkube",
           "proxy",
           "--master=http://127.0.0.1:8080",
-          "--v=2",
+          "--v=4",
           "--resource-container=\"\""
         ],
         "securityContext": {
