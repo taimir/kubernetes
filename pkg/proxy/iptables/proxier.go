@@ -534,6 +534,10 @@ func (proxier *Proxier) OnServiceUpdate(allServices []api.Service) {
 
 	if len(newServiceMap) != len(proxier.serviceMap) || !reflect.DeepEqual(newServiceMap, proxier.serviceMap) {
 		proxier.serviceMap = newServiceMap
+		// resolve the endpoints again, in case some of them point to a service that was just added
+		for svc := range proxier.serviceMap {
+			proxier.endpointsMap[svc] = proxier.resolveEndpoints(proxier.endpointsMap[svc])
+		}
 		proxier.syncProxyRules()
 	} else {
 		glog.V(4).Infof("Skipping proxy iptables rule sync on service update because nothing changed")
@@ -575,6 +579,29 @@ func (proxier *Proxier) buildEndpointInfoList(endPoints []hostPortInfo, endpoint
 		}
 	}
 	return filteredEndpoints
+}
+
+func (proxier *Proxier) pointsToActiveService(endpoint *endpointsInfo) (*proxy.ServicePortName, bool) {
+	for svc, svcInfo := range proxier.serviceMap {
+		endpointIP, _, _ := net.SplitHostPort(endpoint.ip)
+		if svcInfo.clusterIP.String() == endpointIP {
+			return &svc, true
+		}
+	}
+	return nil, false
+}
+
+func (proxier *Proxier) resolveEndpoints(endpoints []*endpointsInfo) []*endpointsInfo {
+	result := make([]*endpointsInfo, 0)
+	for _, ep := range endpoints {
+		if svc, ok := proxier.pointsToActiveService(ep); ok {
+			svcEndpoints := proxier.endpointsMap[*svc]
+			result = append(result, proxier.resolveEndpoints(svcEndpoints)...)
+		} else {
+			result = append(result, ep)
+		}
+	}
+	return result
 }
 
 // OnEndpointsUpdate takes in a slice of updated endpoints.
@@ -633,7 +660,8 @@ func (proxier *Proxier) OnEndpointsUpdate(allEndpoints []api.Endpoints) {
 				}
 				glog.V(3).Infof("Setting endpoints for %q to %+v", svcPort, newEndpoints)
 				// Once the set operations using the list of ips are complete, build the list of endpoint infos
-				proxier.endpointsMap[svcPort] = proxier.buildEndpointInfoList(portsToEndpoints[portname], newEndpoints)
+				endpointInfoList := proxier.buildEndpointInfoList(portsToEndpoints[portname], newEndpoints)
+				proxier.endpointsMap[svcPort] = proxier.resolveEndpoints(endpointInfoList)
 			}
 			activeEndpoints[svcPort] = true
 		}
